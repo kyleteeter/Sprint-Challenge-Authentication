@@ -1,6 +1,9 @@
 const axios = require('axios');
+const bcrypt = require('bcryptjs');
+const db = require('../database/dbhelper');
 
 const { authenticate } = require('../auth/authenticate');
+
 
 module.exports = server => {
   server.post('/api/register', register);
@@ -8,12 +11,62 @@ module.exports = server => {
   server.get('/api/jokes', authenticate, getJokes);
 };
 
+
+
+passwordProtection = (password) => {
+    if(password.length > 11){
+        hashed = bcrypt.hashSync(password, 12);
+        return hashed;
+    } else {
+        return res.status(400).json({
+            message: "Password must be at least 12 characters long"
+        })
+    }
+}
+
+function generateToken(user) {
+  const payload = {
+    username: user.username,
+  };
+
+  const options = {
+    expiresIn: '1h'
+  };
+
+  return jwt.sign(payload, secret, options);
+}
+
+
 function register(req, res) {
   // implement user registration
+  const user = req.body;
+  user.password = passwordProtection(user.password);
+  db.add(user)
+     .then(response => {
+      res.json({ id: user.id, token });
+     })
+     .catch(err => {
+       res.status(500).json({
+         message: "Unable to create user."
+       })
+     })
 }
 
 function login(req, res) {
   // implement user login
+  const creds = req.body;
+  db.login(creds.username)
+   .then(user => {
+     if (bcrypt.compareSync(creds.password, user.password) === true) {
+       const token = generateToken(username)
+       res.json({ id: user.id, token });
+     } else {
+       res.status(404).json({err: "invalid username or password"});
+     }
+   })
+   .catch(err => {
+     res.status(500).send(err);
+   })
 }
 
 function getJokes(req, res) {
