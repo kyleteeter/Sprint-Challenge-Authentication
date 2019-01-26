@@ -1,10 +1,11 @@
 const axios = require('axios');
 const bcrypt = require('bcryptjs');
 const db = require('../database/dbhelper');
-const jwt = require("jsonwebtoken");
-const secret = "top secret";
+
+
 
 const { authenticate } = require('../auth/authenticate');
+const { generateToken } = require('../auth/authenticate');
 
 
 module.exports = server => {
@@ -25,19 +26,6 @@ passwordProtection = (password) => {
         })
     }
 }
-
-function generateToken(user) {
-  const payload = {
-    username: user.username,
-  };
-
-  const options = {
-    expiresIn: '1h'
-  };
-
-  return jwt.sign(payload, secret, options);
-}
-
 
 function register(req, res) {
   // implement user registration
@@ -77,15 +65,15 @@ function login(req, res) {
 
 function getJokes(req, res) {
   const requestOptions = {
-    headers: { accept: 'application/json' },
+    headers: { accept: "application/json" }
   };
 
   axios
-    .get('https://icanhazdadjoke.com/search', requestOptions)
+    .get("https://icanhazdadjoke.com/search", requestOptions)
     .then(response => {
       res.status(200).json(response.data.results);
     })
     .catch(err => {
-      res.status(500).json({ message: 'Error Fetching Jokes', error: err });
+      res.status(500).json({ message: "Error Fetching Jokes", error: err });
     });
 }
